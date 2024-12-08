@@ -15,18 +15,30 @@
 #define PSP_BUF_WIDTH (512)
 #define PSP_SCR_WIDTH (480)
 #define PSP_SCR_HEIGHT (272)
+#define N_QUAD_VERTICES (4)
+#define N_QUAD_INDICES (6) // 3 triangles for a quad
 
 #define GU_LIST_SIZE 262144
 
 namespace nucleus 
 {
-	class vertex 
+	enum class render_mode
 	{
-	public:
+		NUCLEUS_PRIMITIVES, NUCLEUS_TEXTURE2D
+	};
+
+	struct vertex 
+	{
 		unsigned int color;
 		float x, y, z;
-		vertex(float vx, float vy, float vz, unsigned int vcolor);
-	};
+	} __attribute__((aligned(16)));
+
+	struct tex_vertex
+	{
+		float u, v;
+		unsigned int color;
+		float x, y, z;
+	} __attribute__((aligned(16)));
 	
 	class mesh 
 	{
@@ -40,6 +52,31 @@ namespace nucleus
 		vertex *vertices;
 		unsigned short *vertex_indices; // 16 bit
 		unsigned int n_mesh_vertices, n_indices;		// 32 bit
+	} __attribute__((aligned(16)));
+
+	class texture_quad
+	{
+	public:
+		texture_quad(float twidth, float theight, unsigned int color);
+		~texture_quad();
+	private:
+		tex_vertex vertices[N_QUAD_VERTICES];
+		unsigned short vertex_indices[N_QUAD_INDICES];
+		float width, height; 
+	} __attribute__((aligned(16)));
+
+	class texture
+	{
+	public:
+		void load_texture(const char *filename, const int vram); // use GU_TRUE for vram parameter
+		texture();
+		~texture();
+	private:
+		unsigned int *texture_data;
+		unsigned int width, height, pixel_width, pixel_height;
+		void bind_texture(void);
+		unsigned int pow2(const unsigned int val);
+		void swizzle_fast(u8 *out, const u8 *in, const unsigned int width, const unsigned int height);
 	};
 
 	class camera2D 
@@ -60,6 +97,7 @@ namespace nucleus
 	void startFrame(void *list);
 	void endFrame(void);
 	void termGraphics(void);
+	void setRenderMode(render_mode mode);
 	float calculateDeltaTime(u64 &last_time);
 
 	namespace primitive
@@ -79,6 +117,6 @@ namespace nucleus
 				ScePspFVector3 rectangle_pos;
 				float w, h;
 				unsigned int rectangle_color;
-		};
+		}__attribute__((aligned(16)));
 	}
 }

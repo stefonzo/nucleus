@@ -5,14 +5,6 @@ namespace nucleus
 {
 	// data types
 
-	vertex::vertex(float vx, float vy, float vz, unsigned int vcolor)
-	{
-		x = vx;
-		y = vy;
-		z = vz;
-		color = vcolor;
-	}
-
 	mesh::mesh(unsigned int n_vertices, unsigned int index_count)
 	{
 		n_mesh_vertices = n_vertices;
@@ -48,6 +40,42 @@ namespace nucleus
 	void mesh::render_mesh(void)
 	{
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, n_indices, vertex_indices, vertices);
+	}
+
+	texture_quad::texture_quad(float twidth, float theight, unsigned int color)
+	{
+		width = twidth, height = theight;
+		// tex_vertex t0 = tex_vertex(-0.5f * width, -0.5 * height, 0.0f, 0xFF000000, 0.0f, 0.0f);
+		// tex_vertex t1 = tex_vertex(-0.5f * width, 0.5 * height, 0.0f, 0xFF000000, 1.0f, 0.0f);
+		// tex_vertex t2 = tex_vertex(0.5f * width, -0.5f * height, 0.0f, 0xFF000000, 0.0f, 1.0f);
+		// tex_vertex t3 = tex_vertex(0.5f * width, 0.5f * height, 0.0f, 0xFF000000, 1.0f, 1.0f);
+		tex_vertex t0 = {0.0f, 0.0f, color, (-0.5f * width), (-0.5f * height), 0.0f};
+		tex_vertex t1 = {1.0f, 0.0f, color, (-0.5f * width), (0.5f * height), 0.0f};
+		tex_vertex t2 = {0.0f, 1.0f, color, (0.5f * width), (-0.5f * height), 0.0f};
+		tex_vertex t3 = {1.0f, 1.0f, color, (0.5f * width), (0.5f * height), 0.0f};
+		vertices[0] = t0, vertices[1] = t1, vertices[2] = t2, vertices[3] = t3;
+		vertex_indices[0] = 0, vertex_indices[1] = 2, vertex_indices[2] = 1, vertex_indices[3] = 2, vertex_indices[4] = 3, vertex_indices[5] = 1;
+		sceKernelDcacheWritebackInvalidateAll();  
+	}
+
+	texture_quad::~texture_quad()
+	{
+
+	}
+
+	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
+	{
+
+	}
+
+	texture::texture()
+	{
+
+	}
+
+	texture::~texture()
+	{
+
 	}
 
 	camera2D::camera2D(float x, float y) 
@@ -107,12 +135,11 @@ namespace nucleus
 		sceGuScissor(0, 0, PSP_SCR_WIDTH, PSP_SCR_HEIGHT); // Restricts rendering to rectangle with size of PSP screen
 		sceGuEnable(GU_SCISSOR_TEST);
 		sceGuDepthFunc(GU_GEQUAL);
-		sceGuEnable(GU_DEPTH_TEST); // I don't think we're using the zbuffer for depth testing in our main program loop so this is redundant
+		sceGuDisable(GU_DEPTH_TEST); // I don't think we're using the zbuffer for depth testing in our main program loop so this is redundant
 		sceGuFrontFace(GU_CW); // render triangle vertices in a clockwise order
 		sceGuShadeModel(GU_SMOOTH); // how pixels in our triangle will look? (Look at include)
 		sceGuEnable(GU_CULL_FACE); // back facing triangles aren't rendered
-		sceGuEnable(GU_TEXTURE_2D); // so we can use 2D textures later
-		sceGuDisable(GU_TEXTURE_2D); // for testing purposes
+		sceGuDisable(GU_TEXTURE_2D); // so we can use 2D textures later
 		sceGuEnable(GU_CLIP_PLANES); // want view clipping
 		sceGuFinish();               // done configuring Gu, tell the Gu to execute list instructions we sent it
 		sceGuSync(0, 0);
@@ -126,7 +153,6 @@ namespace nucleus
 		// projection matrix (view/camera coords -> NDC)
 		sceGumMatrixMode(GU_PROJECTION);
 		sceGumLoadIdentity();
-		//sceGumOrtho(-16.0f/9.0f, 16.0f/9.0f, -1.0f, 1.0f, -10.0f, 10.0f); // normalized device coordinates
 		sceGumOrtho(0.0f, PSP_SCR_WIDTH, PSP_SCR_HEIGHT, 0.0f, -1.0f, 1.0); // origin is at upper left corner
 
 		// view matrix (world coords -> view/camera coords)
@@ -176,10 +202,10 @@ namespace nucleus
 			rectangle_pos.z = 0.0f;
 
 			// initialize mesh data
-			vertex v1 = vertex((-0.5f * width), (-0.5f * height), 0.0f, color);
-			vertex v2 = vertex((-0.5f * width), (0.5f * height), 0.0f, color);
-			vertex v3 = vertex((0.5f * width), (-0.5f * height), 0.0f, color);
-			vertex v4 = vertex((0.5f * width), (0.5f * height), 0.0f, color);
+			vertex v1 = {color, (-0.5f * width), (-0.5f * height), 0.0f};
+			vertex v2 = {color, (-0.5f * width), (0.5f * height), 0.0f};
+			vertex v3 = {color, (0.5f * width), (-0.5f * height), 0.0f};
+			vertex v4 = {color, (0.5f * width), (0.5f * height), 0.0f};
 			rectangle_mesh.insert_vertex(v1, 0);
 			rectangle_mesh.insert_vertex(v2, 1);
 			rectangle_mesh.insert_vertex(v3, 2);
@@ -190,6 +216,7 @@ namespace nucleus
 			rectangle_mesh.insert_index(2, 3);
 			rectangle_mesh.insert_index(3, 4);
 			rectangle_mesh.insert_index(1, 5);
+			sceKernelDcacheWritebackInvalidateAll();
 		}
 		void rectangle::changePosition(ScePspFVector3 position)
 		{rectangle_pos = position;}

@@ -2,7 +2,7 @@ TARGET = squares
 OBJS = squares.o nucleus.o callbacks.o
 
 INCDIR =
-CFLAGS = -Wall -std=c++11
+CFLAGS = -Wall -std=c++17 
 CXXFLAGS = $(CLFAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
