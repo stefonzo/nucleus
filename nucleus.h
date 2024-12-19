@@ -11,6 +11,7 @@
 
 #include <malloc.h>
 
+
 // constants for buffer argument and for the PSP screen
 #define PSP_BUF_WIDTH (512)
 #define PSP_SCR_WIDTH (480)
@@ -57,26 +58,35 @@ namespace nucleus
 	class texture_quad
 	{
 	public:
-		texture_quad(float twidth, float theight, unsigned int color);
+		texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color);
 		~texture_quad();
+		void render(void);
+		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
 	private:
-		tex_vertex vertices[N_QUAD_VERTICES];
-		unsigned short vertex_indices[N_QUAD_INDICES];
+		tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
+		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
 		float width, height; 
+		ScePspFVector3 quad_pos;
 	} __attribute__((aligned(16)));
 
 	class texture
 	{
 	public:
 		void load_texture(const char *filename, const int vram); // use GU_TRUE for vram parameter
-		texture();
+		texture(const char *filename, const int vram);
 		~texture();
-	private:
-		unsigned int *texture_data;
-		unsigned int width, height, pixel_width, pixel_height;
 		void bind_texture(void);
+		int get_width(void) {return width;}
+		int get_height(void) {return height;}
+		int get_pixel_width(void) {return pixel_width;}
+		int get_pixel_height(void) {return pixel_height;}
+		void *get_texture_data(void) {return texture_data;}
+	private:
+		void *texture_data;
+		int width, height, pixel_width, pixel_height, nr_channels;
 		unsigned int pow2(const unsigned int val);
 		void swizzle_fast(u8 *out, const u8 *in, const unsigned int width, const unsigned int height);
+		void copy_texture_data(void *dest, const void *src);
 	};
 
 	class camera2D 
@@ -97,7 +107,7 @@ namespace nucleus
 	void startFrame(void *list);
 	void endFrame(void);
 	void termGraphics(void);
-	void setRenderMode(render_mode mode);
+	void setRenderMode(render_mode mode, void *list);
 	float calculateDeltaTime(u64 &last_time);
 
 	namespace primitive

@@ -22,6 +22,10 @@ int main()
 	setupCallbacks();
 	nucleus::initGraphics(gu_list);
 	nucleus::initMatrices();
+
+	pspDebugScreenInit();
+	pspDebugScreenSetTextColor(0xFFFFFFFF);
+	
 	ScePspFVector3 pos;
 	pos.x = 10.0f, pos.y = 10.0f;
     nucleus::primitive::rectangle rect = nucleus::primitive::rectangle(240.0f, 136.0f, 0xFF00FF00, pos);
@@ -40,14 +44,33 @@ int main()
 	// variable to store controller info
 	SceCtrlData ctrlData;
 
+	nucleus::texture spelunky_text = nucleus::texture("spelunky_font.png", GU_TRUE);
+	ScePspFVector3 texture_pos = {PSP_SCR_WIDTH / 2.0f, PSP_SCR_HEIGHT / 2.0f, 0.0f};
+	nucleus::texture_quad font = nucleus::texture_quad(100.0f, 100.0f, texture_pos, 0xFF000000);
+
+	nucleus::texture circle_text = nucleus::texture("circle.png", GU_TRUE);
+	ScePspFVector3 circle_pos = {10.0f, 10.0f, 0.0f};
+	nucleus::texture_quad circle = nucleus::texture_quad(50.0f, 50.0f, circle_pos, 0xFF000000);
+
+	static nucleus::render_mode texture_test = nucleus::render_mode::NUCLEUS_TEXTURE2D;
+	static nucleus::render_mode primitive_test = nucleus::render_mode::NUCLEUS_PRIMITIVES;
+	
+
+	nucleus::setRenderMode(texture_test, gu_list);	
+
 	u64 lastTime;
 	sceRtcGetCurrentTick(&lastTime);
+
 
 	while (running)
 	{
 		nucleus::startFrame(gu_list);
+		sceGuDisable(GU_TEXTURE_2D);
 		float dt = nucleus::calculateDeltaTime(lastTime);
-
+		pspDebugScreenSetXY(0, 0);
+		printf("Texture width: %i Texture height: %i\n", spelunky_text.get_width(), spelunky_text.get_height());
+		printf("Pixel width: %i Pixel height: %i\n", spelunky_text.get_pixel_width(), spelunky_text.get_pixel_height());
+	
 		// blending
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 		sceGuEnable(GU_BLEND);
@@ -79,10 +102,16 @@ int main()
 		camera.smoothCameraUpdate(dt);
 		camera.setCamera();
 
-		// render new rectangle
-		rect.render();
-		rect2.render();
-		rect3.render();
+		// render new rectangle	
+		//  rect.render();
+		//  rect2.render();
+		//  rect3.render();
+
+		spelunky_text.bind_texture();	
+		font.render();	
+
+		circle_text.bind_texture();
+		circle.render();
 
 		nucleus::endFrame();
 	}

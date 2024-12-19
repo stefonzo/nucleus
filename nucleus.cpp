@@ -1,6 +1,9 @@
 #include "nucleus.h"
 #include "callbacks.h"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 namespace nucleus
 {
 	// data types
@@ -42,19 +45,18 @@ namespace nucleus
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, n_indices, vertex_indices, vertices);
 	}
 
-	texture_quad::texture_quad(float twidth, float theight, unsigned int color)
+	texture_quad::texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color)
 	{
 		width = twidth, height = theight;
-		// tex_vertex t0 = tex_vertex(-0.5f * width, -0.5 * height, 0.0f, 0xFF000000, 0.0f, 0.0f);
-		// tex_vertex t1 = tex_vertex(-0.5f * width, 0.5 * height, 0.0f, 0xFF000000, 1.0f, 0.0f);
-		// tex_vertex t2 = tex_vertex(0.5f * width, -0.5f * height, 0.0f, 0xFF000000, 0.0f, 1.0f);
-		// tex_vertex t3 = tex_vertex(0.5f * width, 0.5f * height, 0.0f, 0xFF000000, 1.0f, 1.0f);
-		tex_vertex t0 = {0.0f, 0.0f, color, (-0.5f * width), (-0.5f * height), 0.0f};
-		tex_vertex t1 = {1.0f, 0.0f, color, (-0.5f * width), (0.5f * height), 0.0f};
-		tex_vertex t2 = {0.0f, 1.0f, color, (0.5f * width), (-0.5f * height), 0.0f};
-		tex_vertex t3 = {1.0f, 1.0f, color, (0.5f * width), (0.5f * height), 0.0f};
+		quad_pos = pos;
+
+		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, 0.0f};
+		tex_vertex t1 = {0.0f, 1.0f, color, width, -height, 0.0f};
+		tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, 0.0f};
+		tex_vertex t3 = {1.0f, 0.0f, color, 0.0f, 0.0f, 0.0f};
+		
 		vertices[0] = t0, vertices[1] = t1, vertices[2] = t2, vertices[3] = t3;
-		vertex_indices[0] = 0, vertex_indices[1] = 2, vertex_indices[2] = 1, vertex_indices[3] = 2, vertex_indices[4] = 3, vertex_indices[5] = 1;
+		vertex_indices[0] = 0, vertex_indices[1] = 1, vertex_indices[2] = 2, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
 		sceKernelDcacheWritebackInvalidateAll();  
 	}
 
@@ -63,19 +65,121 @@ namespace nucleus
 
 	}
 
-	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
+	void texture_quad::render(void)
 	{
-
+		// transform quad
+		sceGumMatrixMode(GU_MODEL);
+		sceGumLoadIdentity();
+		sceGumTranslate(&quad_pos);
+		// render quad
+		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
-	texture::texture()
+	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
 	{
+		stbi_set_flip_vertically_on_load(GU_TRUE);
+		unsigned char *data = stbi_load(filename, &width, &height, &nr_channels, STBI_rgb_alpha);
+		pspDebugScreenSetXY(0, 0);
+		if (!data) {
+			texture_data = NULL;
+			printf("Unable to load texture!\n");
+			return;
+		}
 
+		pixel_width = pow2(width);
+		pixel_height = pow2(height);
+
+		void *data_buffer = (unsigned int *)memalign(16, pixel_width * pixel_height * 4);
+
+		copy_texture_data(data_buffer, data);
+
+		stbi_image_free(data);
+		
+		unsigned int *swizzled_pixels = NULL;
+		if (vram) 
+		{
+			swizzled_pixels = (unsigned int *)guGetStaticVramTexture(pixel_width, pixel_height, GU_PSM_8888);
+		} else
+		{
+			swizzled_pixels = (unsigned int *)memalign(16, pixel_height * pixel_width * 4);
+		}
+
+		swizzle_fast((u8*)swizzled_pixels, (const u8*) data_buffer, pixel_width * 4, pixel_height);
+
+		free(data_buffer);
+		texture_data = swizzled_pixels;
+		sceKernelDcacheWritebackInvalidateAll();
+	}
+
+	texture::texture(const char *filename, const int vram)
+	{
+		load_texture(filename, vram);
 	}
 
 	texture::~texture()
 	{
 
+	}
+
+	void texture::bind_texture(void)
+	{
+		if (texture_data == NULL)
+			return;
+			
+		sceGuTexMode(GU_PSM_8888, 0, 0, 1);
+    	sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
+    	sceGuTexFilter(GU_NEAREST, GU_NEAREST);
+    	sceGuTexWrap(GU_REPEAT, GU_REPEAT);
+		sceGuTexImage(0, pixel_width, pixel_height, pixel_width, texture_data);
+	}
+
+	void texture::swizzle_fast(u8 *out, const u8 *in, const unsigned int width, const unsigned int height) // from Iridescentrose
+	{
+		unsigned int blockx, blocky;
+    	unsigned int j;
+
+    	unsigned int width_blocks = (width / 16);
+    	unsigned int height_blocks = (height / 8);
+
+    	unsigned int src_pitch = (width - 16) / 4;
+    	unsigned int src_row = width * 8;
+
+    	const u8 *ysrc = in;
+    	u32 *dst = (u32 *)out;
+
+    	for (blocky = 0; blocky < height_blocks; ++blocky) {
+        	const u8 *xsrc = ysrc;
+        	for (blockx = 0; blockx < width_blocks; ++blockx) {
+            	const u32 *src = (u32 *)xsrc;
+            	for (j = 0; j < 8; ++j) {
+                	*(dst++) = *(src++);
+                	*(dst++) = *(src++);
+                	*(dst++) = *(src++);
+                	*(dst++) = *(src++);
+                	src += src_pitch;
+            	}
+            	xsrc += 16;
+        	}
+        	ysrc += src_row;
+    	}
+	}
+
+	unsigned int texture::pow2(const unsigned int val)
+	{
+		unsigned int poweroftwo = 1;
+    	while (poweroftwo < val) {
+        	poweroftwo <<= 1;
+    	}
+    	return poweroftwo;
+	}
+
+	void texture::copy_texture_data(void *dest, const void *src)
+	{
+		for (int y = 0; y < height; y++) {
+        	for (int x = 0; x < width; x++) {
+        		((unsigned int*)dest)[x + y * pixel_width] = ((unsigned int *)src)[x + y * width];
+       		}
+    	}
 	}
 
 	camera2D::camera2D(float x, float y) 
@@ -139,7 +243,8 @@ namespace nucleus
 		sceGuFrontFace(GU_CW); // render triangle vertices in a clockwise order
 		sceGuShadeModel(GU_SMOOTH); // how pixels in our triangle will look? (Look at include)
 		sceGuEnable(GU_CULL_FACE); // back facing triangles aren't rendered
-		sceGuDisable(GU_TEXTURE_2D); // so we can use 2D textures later
+		//sceGuDisable(GU_CULL_FACE);
+		sceGuEnable(GU_TEXTURE_2D); // so we can use 2D textures later
 		sceGuEnable(GU_CLIP_PLANES); // want view clipping
 		sceGuFinish();               // done configuring Gu, tell the Gu to execute list instructions we sent it
 		sceGuSync(0, 0);
@@ -192,6 +297,19 @@ namespace nucleus
 		return dt;
 	}	
 
+	void setRenderMode(render_mode mode, void *list)
+	{
+		sceGuStart(GU_DIRECT, list);
+		if (mode == render_mode::NUCLEUS_PRIMITIVES) {
+			sceGuDisable(GU_TEXTURE_2D);
+		} else if (mode == render_mode::NUCLEUS_TEXTURE2D) {
+			sceGuEnable(GU_TEXTURE_2D);
+		}
+		sceGuFinish();
+		sceGuSync(0,0);
+		sceDisplayWaitVblankStart();
+	}
+
 	namespace primitive
 	{
 		rectangle::rectangle(float width, float height, unsigned int color, ScePspFVector3 position) 
@@ -202,22 +320,25 @@ namespace nucleus
 			rectangle_pos.z = 0.0f;
 
 			// initialize mesh data
-			vertex v1 = {color, (-0.5f * width), (-0.5f * height), 0.0f};
-			vertex v2 = {color, (-0.5f * width), (0.5f * height), 0.0f};
-			vertex v3 = {color, (0.5f * width), (-0.5f * height), 0.0f};
-			vertex v4 = {color, (0.5f * width), (0.5f * height), 0.0f};
+			vertex v1 = {color, 0.0f, -height, 0.0f};
+			vertex v2 = {color, width, -height, 0.0f};
+			vertex v3 = {color, width, 0.0f, 0.0f};
+			vertex v4 = {color, 0.0f, 0.0f, 0.0f};
 			rectangle_mesh.insert_vertex(v1, 0);
 			rectangle_mesh.insert_vertex(v2, 1);
 			rectangle_mesh.insert_vertex(v3, 2);
 			rectangle_mesh.insert_vertex(v4, 3);
+
 			rectangle_mesh.insert_index(0, 0);
-			rectangle_mesh.insert_index(2, 1);
-			rectangle_mesh.insert_index(1, 2);
-			rectangle_mesh.insert_index(2, 3);
-			rectangle_mesh.insert_index(3, 4);
-			rectangle_mesh.insert_index(1, 5);
+			rectangle_mesh.insert_index(1, 1);
+			rectangle_mesh.insert_index(2, 2);
+
+			rectangle_mesh.insert_index(0, 3);
+			rectangle_mesh.insert_index(2, 4);
+			rectangle_mesh.insert_index(3, 5);
 			sceKernelDcacheWritebackInvalidateAll();
 		}
+
 		void rectangle::changePosition(ScePspFVector3 position)
 		{rectangle_pos = position;}
 
