@@ -51,9 +51,9 @@ namespace nucleus
 		quad_pos = pos;
 
 		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, 0.0f};
-		tex_vertex t1 = {0.0f, 1.0f, color, width, -height, 0.0f};
+		tex_vertex t1 = {1.0f, 0.0f, color, width, -height, 0.0f};
 		tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, 0.0f};
-		tex_vertex t3 = {1.0f, 0.0f, color, 0.0f, 0.0f, 0.0f};
+		tex_vertex t3 = {0.0f, 1.0f, color, 0.0f, 0.0f, 0.0f};
 		
 		vertices[0] = t0, vertices[1] = t1, vertices[2] = t2, vertices[3] = t3;
 		vertex_indices[0] = 0, vertex_indices[1] = 1, vertex_indices[2] = 2, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
@@ -82,9 +82,9 @@ namespace nucleus
 		pspDebugScreenSetXY(0, 0);
 		if (!data) {
 			texture_data = NULL;
-			printf("Unable to load texture!\n");
+			writeToLog("Unable to load texture!");
 			return;
-		}
+		} 
 
 		pixel_width = pow2(width);
 		pixel_height = pow2(height);
@@ -99,6 +99,7 @@ namespace nucleus
 		if (vram) 
 		{
 			swizzled_pixels = (unsigned int *)guGetStaticVramTexture(pixel_width, pixel_height, GU_PSM_8888);
+			writeToLog("Texture loaded into ram.\n");
 		} else
 		{
 			swizzled_pixels = (unsigned int *)memalign(16, pixel_height * pixel_width * 4);
@@ -123,8 +124,12 @@ namespace nucleus
 
 	void texture::bind_texture(void)
 	{
-		if (texture_data == NULL)
+		if (texture_data == NULL) {
+			writeToLog("Unable to bind texture!");
 			return;
+		} else {
+			writeToLog("Texture bound!");
+		}
 			
 		sceGuTexMode(GU_PSM_8888, 0, 0, 1);
     	sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA);
@@ -217,7 +222,19 @@ namespace nucleus
 		sceGumTranslate(&translated_pos);
 	}
 
-	// methods
+	// nucleus methods
+
+	void writeToLog(const char *message)
+	{
+    	int fd = sceIoOpen(LOG_FILE, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_APPEND, 0777);
+    	if (fd >= 0) {
+        	sceIoWrite(fd, message, strlen(message));
+        	sceIoWrite(fd, "\n", 1); // Add a newline
+        	sceIoClose(fd);
+    	} else {
+        	pspDebugScreenPrintf("Failed to open log file!\n");
+    	}
+	}
 	void initGraphics(void *list)
 	{
 		// allocate memory in vram for draw, display, and zbuffers
@@ -243,7 +260,6 @@ namespace nucleus
 		sceGuFrontFace(GU_CW); // render triangle vertices in a clockwise order
 		sceGuShadeModel(GU_SMOOTH); // how pixels in our triangle will look? (Look at include)
 		sceGuEnable(GU_CULL_FACE); // back facing triangles aren't rendered
-		//sceGuDisable(GU_CULL_FACE);
 		sceGuEnable(GU_TEXTURE_2D); // so we can use 2D textures later
 		sceGuEnable(GU_CLIP_PLANES); // want view clipping
 		sceGuFinish();               // done configuring Gu, tell the Gu to execute list instructions we sent it

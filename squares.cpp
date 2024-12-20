@@ -56,7 +56,7 @@ int main()
 	static nucleus::render_mode primitive_test = nucleus::render_mode::NUCLEUS_PRIMITIVES;
 	
 
-	nucleus::setRenderMode(texture_test, gu_list);	
+	nucleus::setRenderMode(primitive_test, gu_list);	
 
 	u64 lastTime;
 	sceRtcGetCurrentTick(&lastTime);
@@ -65,11 +65,7 @@ int main()
 	while (running)
 	{
 		nucleus::startFrame(gu_list);
-		sceGuDisable(GU_TEXTURE_2D);
 		float dt = nucleus::calculateDeltaTime(lastTime);
-		pspDebugScreenSetXY(0, 0);
-		printf("Texture width: %i Texture height: %i\n", spelunky_text.get_width(), spelunky_text.get_height());
-		printf("Pixel width: %i Pixel height: %i\n", spelunky_text.get_pixel_width(), spelunky_text.get_pixel_height());
 	
 		// blending
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
@@ -103,9 +99,9 @@ int main()
 		camera.setCamera();
 
 		// render new rectangle	
-		//  rect.render();
-		//  rect2.render();
-		//  rect3.render();
+		  rect.render();
+		  rect2.render();
+		  rect3.render();
 
 		spelunky_text.bind_texture();	
 		font.render();	

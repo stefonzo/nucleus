@@ -8,9 +8,11 @@
 #include <psprtc.h>
 #include <pspctrl.h>
 #include <pspdebug.h>
+#include <pspiofilemgr.h>
 
 #include <malloc.h>
 
+#define LOG_FILE "ms0:/log.txt"
 
 // constants for buffer argument and for the PSP screen
 #define PSP_BUF_WIDTH (512)
@@ -102,6 +104,7 @@ namespace nucleus
 		ScePspFVector3 camera_target;
 	};
 
+	void writeToLog(const char *message);
 	void initGraphics(void *list);
 	void initMatrices(void);
 	void startFrame(void *list);
