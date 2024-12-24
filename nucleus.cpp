@@ -50,13 +50,19 @@ namespace nucleus
 		width = twidth, height = theight;
 		quad_pos = pos;
 
-		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, 0.0f};
-		tex_vertex t1 = {1.0f, 0.0f, color, width, -height, 0.0f};
-		tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, 0.0f};
-		tex_vertex t3 = {0.0f, 1.0f, color, 0.0f, 0.0f, 0.0f};
+		
+		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, -1.0f};
+		tex_vertex t1 = {1.0f, 0.0f, color, width, -height, -1.0f};
+		tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, -1.0f};
+		tex_vertex t3 = {0.0f, 1.0f, color, 0.0f, 0.0f, -1.0f};
+
+		// tex_vertex t0 ={0.0f, 0.0f, color, -width, -height, -1.0f};
+    	// tex_vertex t1 = {1.0f, 0.0f, color, -width, height, -1.0f};
+    	// tex_vertex t2 = {1.0f, 1.0f, color, width, height, -1.0f};
+    	// tex_vertex t3 = {0.0f, 1.0f, color, width, -height, -1.0f};
 		
 		vertices[0] = t0, vertices[1] = t1, vertices[2] = t2, vertices[3] = t3;
-		vertex_indices[0] = 0, vertex_indices[1] = 1, vertex_indices[2] = 2, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
+		vertex_indices[0] = 2, vertex_indices[1] = 1, vertex_indices[2] = 0, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
 		sceKernelDcacheWritebackInvalidateAll();  
 	}
 
@@ -256,7 +262,7 @@ namespace nucleus
 		sceGuScissor(0, 0, PSP_SCR_WIDTH, PSP_SCR_HEIGHT); // Restricts rendering to rectangle with size of PSP screen
 		sceGuEnable(GU_SCISSOR_TEST);
 		sceGuDepthFunc(GU_GEQUAL);
-		sceGuDisable(GU_DEPTH_TEST); // I don't think we're using the zbuffer for depth testing in our main program loop so this is redundant
+		sceGuEnable(GU_DEPTH_TEST); // I don't think we're using the zbuffer for depth testing in our main program loop so this is redundant
 		sceGuFrontFace(GU_CW); // render triangle vertices in a clockwise order
 		sceGuShadeModel(GU_SMOOTH); // how pixels in our triangle will look? (Look at include)
 		sceGuEnable(GU_CULL_FACE); // back facing triangles aren't rendered
