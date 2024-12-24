@@ -46,14 +46,27 @@ int main()
 		nucleus::writeToLog("Unable to load texture!");
 	}
 	ScePspFVector3 texture_pos = {PSP_SCR_WIDTH / 2.0f, PSP_SCR_HEIGHT / 2.0f, 0.0f};
-	nucleus::texture_quad font = nucleus::texture_quad(spelunky_text.get_pixel_width(), spelunky_text.get_pixel_height(), texture_pos, 0xFF000000);
+	nucleus::texture_quad font = nucleus::texture_quad(spelunky_text.get_pixel_width(), spelunky_text.get_pixel_height(), texture_pos, 0xFFFFFFFF);
 
 	nucleus::texture circle_text = nucleus::texture("circle.png", GU_TRUE);
 	if (circle_text.get_texture_data() == NULL) {
 		nucleus::writeToLog("Unable to load texture!");
 	}
-	ScePspFVector3 circle_pos = {10.0f, 10.0f, 0.0f};
-	nucleus::texture_quad circle = nucleus::texture_quad(100.0f, 100.0f, circle_pos, 0xFF000000);
+	ScePspFVector3 circle_pos = {0.0f, 0.0f, 0.0f};
+	nucleus::texture_quad circle = nucleus::texture_quad(100.0f, 100.0f, circle_pos, 0xFFFFFFFF);
+
+	char buff[256];
+	sprintf(buff, "v1 x: %f y: %f z: %f", font.vertices[0].x, font.vertices[0].y, font.vertices[0].z);
+	nucleus::writeToLog(buff);
+
+	sprintf(buff, "v2 x: %f y: %f z: %f", font.vertices[1].x, font.vertices[1].y, font.vertices[1].z);
+	nucleus::writeToLog(buff);
+
+	sprintf(buff, "v3 x: %f y: %f z: %f", font.vertices[2].x, font.vertices[2].y, font.vertices[2].z);
+	nucleus::writeToLog(buff);
+
+	sprintf(buff, "v4 x: %f y: %f z: %f", font.vertices[3].x, font.vertices[3].y, font.vertices[3].z);
+	nucleus::writeToLog(buff);
 
 	static nucleus::render_mode texture_test = nucleus::render_mode::NUCLEUS_TEXTURE2D;
 	static nucleus::render_mode primitive_test = nucleus::render_mode::NUCLEUS_PRIMITIVES;

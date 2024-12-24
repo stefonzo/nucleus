@@ -10,6 +10,7 @@
 #include <pspdebug.h>
 #include <pspiofilemgr.h>
 
+#include <cstdio>
 #include <malloc.h>
 
 #define LOG_FILE "ms0:/log.txt"
@@ -34,14 +35,14 @@ namespace nucleus
 	{
 		unsigned int color;
 		float x, y, z;
-	} __attribute__((aligned(16)));
+	};
 
 	struct tex_vertex
 	{
 		float u, v;
 		unsigned int color;
 		float x, y, z;
-	} __attribute__((aligned(16)));
+	};
 	
 	class mesh 
 	{
@@ -64,8 +65,9 @@ namespace nucleus
 		~texture_quad();
 		void render(void);
 		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
-	private:
 		tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
+	private:
+		// tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
 		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
 		float width, height; 
 		ScePspFVector3 quad_pos;
