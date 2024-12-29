@@ -10,6 +10,8 @@
 #include <pspdebug.h>
 #include <pspiofilemgr.h>
 
+#include <string>
+#include <unordered_map>
 #include <cstdio>
 #include <malloc.h>
 
@@ -85,12 +87,23 @@ namespace nucleus
 		int get_pixel_width(void) {return pixel_width;}
 		int get_pixel_height(void) {return pixel_height;}
 		void *get_texture_data(void) {return texture_data;}
+		void set_texture_data(void* data) {texture_data = data;} // I might not need this...
 	private:
 		void *texture_data;
 		int width, height, pixel_width, pixel_height, nr_channels;
 		unsigned int pow2(const unsigned int val);
 		void swizzle_fast(u8 *out, const u8 *in, const unsigned int width, const unsigned int height);
 		void copy_texture_data(void *dest, const void *src);
+	};
+
+	class texture_manager
+	{
+	public:
+		texture_manager();
+		~texture_manager();
+		void addTexture(std::string filename);
+		void removeTexture(std::string filename);
+		std::unordered_map<std::string, texture> textures;
 	};
 
 	class camera2D 
@@ -107,6 +120,8 @@ namespace nucleus
 	};
 
 	void writeToLog(const char *message);
+	void *getStaticVramBuffer(unsigned int width, unsigned int height, unsigned int psm);
+	void *getStaticVramTexture(unsigned int width, unsigned int height, unsigned int psm);
 	void initGraphics(void *list);
 	void initMatrices(void);
 	void startFrame(void *list);

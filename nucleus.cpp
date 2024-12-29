@@ -51,10 +51,6 @@ namespace nucleus
 		quad_pos = pos;
 		quad_pos.z = 0.0f;
 		
-		// tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, -1.0f};
-		// tex_vertex t1 = {1.0f, 0.0f, color, width, -height, -1.0f};
-		// tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, -1.0f};
-		// tex_vertex t3 = {0.0f, 1.0f, color, 0.0f, 0.0f, -1.0f};
 		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, 0.0f};
 		tex_vertex t1 = {1.0f, 0.0f, color, width, -height, 0.0f};
 		tex_vertex t2 = {1.0f, 1.0f, color, width, 0.0f, 0.0f};
@@ -82,11 +78,11 @@ namespace nucleus
 
 	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
 	{
-		stbi_set_flip_vertically_on_load(GU_TRUE);
+		stbi_set_flip_vertically_on_load(GU_FALSE);
 		unsigned char *data = stbi_load(filename, &width, &height, &nr_channels, STBI_rgb_alpha);
 		pspDebugScreenSetXY(0, 0);
 		if (!data) {
-			texture_data = NULL;
+			texture_data = nullptr;
 			writeToLog("Unable to load texture!");
 			return;
 		} 
@@ -100,10 +96,10 @@ namespace nucleus
 
 		stbi_image_free(data);
 		
-		unsigned int *swizzled_pixels = NULL;
+		unsigned int *swizzled_pixels = nullptr;
 		if (vram) 
 		{
-			swizzled_pixels = (unsigned int *)guGetStaticVramTexture(pixel_width, pixel_height, GU_PSM_8888);
+			swizzled_pixels = (unsigned int *)getStaticVramTexture(pixel_width, pixel_height, GU_PSM_8888);
 			writeToLog("Texture loaded into ram.\n");
 		} else
 		{
@@ -114,6 +110,9 @@ namespace nucleus
 
 		free(data_buffer);
 		texture_data = swizzled_pixels;
+		char buff[256];
+		sprintf(buff, "Texture allocated at: %p", texture_data);
+		writeToLog(buff);
 		sceKernelDcacheWritebackInvalidateAll();
 	}
 
@@ -129,11 +128,11 @@ namespace nucleus
 
 	void texture::bind_texture(void)
 	{
-		if (texture_data == NULL) {
-			writeToLog("Unable to bind texture!");
+		if (texture_data == nullptr) {
+			//writeToLog("Unable to bind texture!");
 			return;
 		} else {
-			writeToLog("Texture bound!");
+			//writeToLog("Texture bound!");
 		}
 			
 		sceGuTexMode(GU_PSM_8888, 0, 0, 1);
@@ -192,6 +191,21 @@ namespace nucleus
     	}
 	}
 
+	 texture_manager::texture_manager() {}
+	 texture_manager::~texture_manager() {}
+
+	void texture_manager::addTexture(std::string filename)
+	{
+		texture temp_texture = texture(filename.c_str(), GU_TRUE);
+		if (temp_texture.get_texture_data() == nullptr) { return; }
+		textures.insert({filename, temp_texture});
+	}
+
+	void texture_manager::removeTexture(std::string filename)
+	{
+		textures.erase(filename);
+	}
+
 	camera2D::camera2D(float x, float y) 
 	{
 		camera_pos.x = x;
@@ -240,13 +254,48 @@ namespace nucleus
         	pspDebugScreenPrintf("Failed to open log file!\n");
     	}
 	}
+
+	void *getStaticVramBuffer(unsigned int width, unsigned int height, unsigned int psm)
+	{
+		static unsigned int offset = 0;
+		unsigned int buffer_size;
+		if (psm == GU_PSM_8888) {
+			buffer_size = width * height * 4;
+		} else if (psm == GU_PSM_4444) {
+			buffer_size = width * height * 2;
+		} else {
+			return nullptr;
+		}
+		void *buffer = (void*)offset;
+		offset += buffer_size;
+		if (offset >= 2 * 1024 * 1024) { // don't want to exceed 2Mb vram range
+			return nullptr;
+		}
+		return buffer;
+	}
+
+	void *getStaticVramTexture(unsigned int width, unsigned int height, unsigned int psm)
+	{
+		void *texture = getStaticVramBuffer(width, height, psm);
+		return (void*)(((unsigned int)texture) + ((unsigned int)sceGeEdramGetAddr()));
+	}
+
 	void initGraphics(void *list)
 	{
 		// allocate memory in vram for draw, display, and zbuffers
-		void *draw_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
-		void *disp_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
-		void *z_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_4444);
-
+		char buff[256];
+		//void *draw_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
+		void *draw_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
+		sprintf(buff, "Draw buffer allocated at: %p", draw_buffer);
+		writeToLog(buff);
+		//void *disp_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
+		void *disp_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
+		sprintf(buff, "Display buffer allocated at: %p", disp_buffer);
+		writeToLog(buff);
+		//void *z_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_4444);
+		void *z_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_4444);
+		sprintf(buff, "Z buffer allocated at: %p", z_buffer);
+		writeToLog(buff);
 		// configure Gu
 		sceGuInit();
 		sceGuStart(GU_DIRECT, list);
