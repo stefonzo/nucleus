@@ -30,7 +30,7 @@ namespace nucleus
 {
 	enum class render_mode
 	{
-		NUCLEUS_PRIMITIVES, NUCLEUS_TEXTURE2D
+		NUCLEUS_PRIMITIVES, NUCLEUS_TEXTURE2D, NUCLEUS_LIGHTING2D
 	};
 
 	struct vertex 
@@ -44,6 +44,13 @@ namespace nucleus
 		float u, v;
 		unsigned int color;
 		float x, y, z;
+	};
+
+	struct nt_vertex // 'normal-texture vertex'
+	{
+		float x, y, z;
+		float nx, ny, nz;
+		float u, v;
 	};
 	
 	class mesh 
@@ -60,6 +67,21 @@ namespace nucleus
 		unsigned int n_mesh_vertices, n_indices;		// 32 bit
 	} __attribute__((aligned(16)));
 
+	// virtual class, I want texture_quad and lit_texture_quad to derive from this class ultimately
+	template<typename T>
+	class quad
+	{
+	public:
+		virtual void render(void) = 0;
+		virtual void change_position(ScePspFVector3 *position) = 0;
+		virtual ~quad() = default;
+		T __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
+	private:
+		T __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
+		float width, height;
+		ScePspFVector3 quad_pos;
+	};
+
 	class texture_quad
 	{
 	public:
@@ -69,9 +91,22 @@ namespace nucleus
 		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
 		tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
 	private:
-		// tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
 		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
 		float width, height; 
+		ScePspFVector3 quad_pos;
+	} __attribute__((aligned(16)));
+
+	class lit_texture_quad
+	{
+	public:
+		lit_texture_quad(float twidth, float theight, ScePspFVector3 pos);
+		~lit_texture_quad();
+		void render(void);
+		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
+		nt_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
+	private:
+		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
+		float width, height;
 		ScePspFVector3 quad_pos;
 	} __attribute__((aligned(16)));
 

@@ -36,11 +36,15 @@ int main()
 
 	ScePspFVector3 font_pos = {PSP_SCR_WIDTH / 2, PSP_SCR_HEIGHT / 2, 0.0f};
 	ScePspFVector3 circle_pos = {20.0f, 20.0f, 0.0f};
+	ScePspFVector3 lit_circle_pos = {PSP_SCR_WIDTH / 2, PSP_SCR_HEIGHT / 2, 0.0f};
 
 	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").get_pixel_width(), demo_textures.textures.at("spelunky_font.png").get_pixel_height(), font_pos, 0xFFFFFFFF);
 	nucleus::texture_quad circle_quad = nucleus::texture_quad(50.0f, 50.0f, circle_pos, 0xFFFFFFFF);
 
+	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, lit_circle_pos);
+
 	static nucleus::render_mode texture_test = nucleus::render_mode::NUCLEUS_TEXTURE2D;
+	static nucleus::render_mode lighting_test = nucleus::render_mode::NUCLEUS_LIGHTING2D;
 
 	nucleus::setRenderMode(texture_test, gu_list);	
 
@@ -59,8 +63,8 @@ int main()
 		sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
 		sceGuEnable(GU_BLEND);
 
-		// clear background to white
-		sceGuClearColor(0xFFEF0000);
+		// clear background to gray
+		sceGuClearColor(0xFF888888);
 		sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT | GU_STENCIL_BUFFER_BIT);
 
 		// testing out controller input
@@ -95,6 +99,10 @@ int main()
 		demo_textures.textures.at("circle.png").bind_texture();
 		circle_quad.render();
 
+		// render lit quad
+		// demo_textures.textures.at("circle.png").bind_texture();
+		// lit_circle_quad.render();
+		
 		nucleus::endFrame();
 	}
 	nucleus::termGraphics();

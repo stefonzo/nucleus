@@ -76,6 +76,35 @@ namespace nucleus
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
+	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 pos)
+	{
+		width = twidth, height = theight;
+		quad_pos = pos;
+		quad_pos.z = 0.0f;
+
+		//              position              normal            u     v 
+		nt_vertex v0 = {0.0f, -height, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
+		nt_vertex v1 = {width, -height, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f};
+		nt_vertex v2 = {width, 0.0f, 0.0f,    0.0f, 0.0f, 1.0f, 1.0f, 1.0f};
+		nt_vertex v3 = {0.0f, 0.0f, 0.0f,     0.0f, 0.0f, 1.0f, 0.0f, 1.0f};
+
+		vertices[0] = v0, vertices[1] = v1, vertices[2] = v2, vertices[3] = v3;
+		vertex_indices[0] = 0, vertex_indices[1] = 1, vertex_indices[2] = 2, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
+		sceKernelDcacheWritebackInvalidateAll();  
+	}
+
+	lit_texture_quad::~lit_texture_quad() {}
+
+	void lit_texture_quad::render(void)
+	{
+		// transform quad
+		sceGumMatrixMode(GU_MODEL);
+		sceGumLoadIdentity();
+		sceGumTranslate(&quad_pos);
+		// render quad
+		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_NORMAL_32BITF |GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
+	}
+
 	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
 	{
 		stbi_set_flip_vertically_on_load(GU_FALSE);
@@ -374,6 +403,9 @@ namespace nucleus
 			sceGuDisable(GU_TEXTURE_2D);
 		} else if (mode == render_mode::NUCLEUS_TEXTURE2D) {
 			sceGuEnable(GU_TEXTURE_2D);
+		} else if (mode == render_mode::NUCLEUS_LIGHTING2D) {
+			sceGuEnable(GU_TEXTURE_2D);
+			sceGuEnable(GU_LIGHTING);
 		}
 		sceGuFinish();
 		sceGuSync(0,0);
