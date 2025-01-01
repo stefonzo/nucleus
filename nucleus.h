@@ -68,47 +68,34 @@ namespace nucleus
 		unsigned int n_mesh_vertices, n_indices;		// 32 bit
 	} __attribute__((aligned(16)));
 
-	// virtual class, I want texture_quad and lit_texture_quad to derive from this class ultimately
 	template<typename T>
 	class quad
 	{
 	public:
 		virtual void render(void) = 0;
-		virtual void change_position(ScePspFVector3 *position) = 0;
 		virtual ~quad() = default;
+		void change_position(ScePspFVector3 *position);
 		T __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
-	private:
-		T __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
+	protected:
+		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
 		float width, height;
 		ScePspFVector3 quad_pos;
 	};
 
-	class texture_quad
+	class texture_quad : public quad<tex_vertex>
 	{
 	public:
-		texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color);
+		texture_quad(float twidth, float theight, ScePspFVector3 *pos, unsigned int color);
 		~texture_quad();
-		void render(void);
-		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
-		tex_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
-	private:
-		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
-		float width, height; 
-		ScePspFVector3 quad_pos;
+		void render(void) override;
 	} __attribute__((aligned(16)));
 
-	class lit_texture_quad
+	class lit_texture_quad : public quad<tcnp_vertex>
 	{
 	public:
-		lit_texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color);
+		lit_texture_quad(float twidth, float theight, ScePspFVector3 *pos, unsigned int color);
 		~lit_texture_quad();
-		void render(void);
-		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
-		tcnp_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
-	private:
-		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
-		float width, height;
-		ScePspFVector3 quad_pos;
+		void render(void) override;
 	} __attribute__((aligned(16)));
 
 	class texture

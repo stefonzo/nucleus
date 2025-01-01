@@ -44,11 +44,17 @@ namespace nucleus
 	{
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, n_indices, vertex_indices, vertices);
 	}
+	
+	template <typename T>
+	void quad<T>::change_position(ScePspFVector3 * pos)
+	{
+		quad_pos.x = pos->x, quad_pos.y = pos->y, quad_pos.z = pos->z;
+	}
 
-	texture_quad::texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color)
+	texture_quad::texture_quad(float twidth, float theight, ScePspFVector3 *pos, unsigned int color)
 	{
 		width = twidth, height = theight;
-		quad_pos = pos;
+		quad_pos.x = pos->x, quad_pos.y = pos->y;
 		quad_pos.z = 0.0f;
 		
 		tex_vertex t0 = {0.0f, 0.0f, color, 0.0f, -height, 0.0f};
@@ -63,7 +69,7 @@ namespace nucleus
 
 	texture_quad::~texture_quad()
 	{
-
+		
 	}
 
 	void texture_quad::render(void)
@@ -76,10 +82,10 @@ namespace nucleus
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
-	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color)
+	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 *pos, unsigned int color)
 	{
 		width = twidth, height = theight;
-		quad_pos = pos;
+		quad_pos.x = pos->x, quad_pos.y = pos->y;
 		quad_pos.z = 0.0f;
 
 		tcnp_vertex v0 = {0.0f, 0.0f, color, 0.0f, 0.0f, 1.0f, 0.0f, -height, 0.0f};
@@ -378,13 +384,13 @@ namespace nucleus
     	sceGuLight(0, GU_DIRECTIONAL, GU_DIFFUSE_AND_SPECULAR, &light_direction);
 
     	// Set light colors (RGBA)
-    	sceGuLightColor(0, GU_DIFFUSE, GU_COLOR(0.2f, 0.2f, 0.2f, 1.0f)); // White diffuse light
+    	sceGuLightColor(0, GU_DIFFUSE, GU_COLOR(1.0f, 1.0f, 1.0f, 1.0f)); // White diffuse light
     	sceGuLightColor(0, GU_SPECULAR, GU_COLOR(0.1f, 0.1f, 0.1f, 1.0f)); // Less intense specular light
 
     	// Set ambient light globally (RGBA)
     	sceGuAmbient(GU_COLOR(0.4f, 0.4f, 0.4f, 1.0f)); // Dim ambient light
 
-		sceGuMaterial(GU_AMBIENT_AND_DIFFUSE, GU_COLOR(1.0f, 1.5f, 1.5f, 1.0f)); // Pinkish material
+		sceGuMaterial(GU_AMBIENT_AND_DIFFUSE, GU_COLOR(0.0f, 1.0f, 0.0f, 1.0f)); // Pinkish material
 
 		sceGuFinish();
 		sceGuSync(0, 0);

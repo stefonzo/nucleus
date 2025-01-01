@@ -39,10 +39,10 @@ int main()
 	ScePspFVector3 circle_pos = {20.0f, 20.0f, 0.0f};
 	ScePspFVector3 lit_circle_pos = {PSP_SCR_WIDTH / 2, PSP_SCR_HEIGHT / 2, 0.0f};
 
-	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").get_pixel_width(), demo_textures.textures.at("spelunky_font.png").get_pixel_height(), font_pos, 0xFFFFFFFF);
-	nucleus::texture_quad circle_quad = nucleus::texture_quad(50.0f, 50.0f, circle_pos, 0xFFFFFFFF);
+	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").get_pixel_width(), demo_textures.textures.at("spelunky_font.png").get_pixel_height(), &font_pos, 0xFFFFFFFF);
+	nucleus::texture_quad circle_quad = nucleus::texture_quad(50.0f, 50.0f, &circle_pos, 0xFFFFFFFF);
 
-	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, lit_circle_pos, 0xFFFFFFFF);
+	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, &lit_circle_pos, 0xFFFFFFFF);
 
 	static nucleus::render_mode texture_test = nucleus::render_mode::NUCLEUS_TEXTURE2D;
 	static nucleus::render_mode lighting_test = nucleus::render_mode::NUCLEUS_LIGHTING2D;
