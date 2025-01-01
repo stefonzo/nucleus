@@ -46,11 +46,12 @@ namespace nucleus
 		float x, y, z;
 	};
 
-	struct nt_vertex // 'normal-texture vertex'
+	struct tcnp_vertex // 'texture, color, normal, position'
 	{
-		float x, y, z;
-		float nx, ny, nz;
 		float u, v;
+		unsigned int color;
+		float nx, ny, nz;
+		float x, y, z;
 	};
 	
 	class mesh 
@@ -99,11 +100,11 @@ namespace nucleus
 	class lit_texture_quad
 	{
 	public:
-		lit_texture_quad(float twidth, float theight, ScePspFVector3 pos);
+		lit_texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color);
 		~lit_texture_quad();
 		void render(void);
 		void change_position(ScePspFVector3 pos) { quad_pos = pos;}
-		nt_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
+		tcnp_vertex __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
 	private:
 		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
 		float width, height;
@@ -159,6 +160,7 @@ namespace nucleus
 	void *getStaticVramTexture(unsigned int width, unsigned int height, unsigned int psm);
 	void initGraphics(void *list);
 	void initMatrices(void);
+	void initLighting(void *list);
 	void startFrame(void *list);
 	void endFrame(void);
 	void termGraphics(void);

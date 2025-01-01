@@ -3,4 +3,6 @@
 .squares.cpp.swp
 squares.elf
 squares.o
-
+EBOOT.PBP
+PARAM.SFO
+callbacks.o

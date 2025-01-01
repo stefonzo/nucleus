@@ -21,6 +21,7 @@ int main()
 
 	setupCallbacks();
 	nucleus::initGraphics(gu_list);
+	nucleus::initLighting(gu_list);
 	nucleus::initMatrices();
 
 	// testing out a 2D camera
@@ -41,12 +42,13 @@ int main()
 	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").get_pixel_width(), demo_textures.textures.at("spelunky_font.png").get_pixel_height(), font_pos, 0xFFFFFFFF);
 	nucleus::texture_quad circle_quad = nucleus::texture_quad(50.0f, 50.0f, circle_pos, 0xFFFFFFFF);
 
-	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, lit_circle_pos);
+	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, lit_circle_pos, 0xFFFFFFFF);
 
 	static nucleus::render_mode texture_test = nucleus::render_mode::NUCLEUS_TEXTURE2D;
 	static nucleus::render_mode lighting_test = nucleus::render_mode::NUCLEUS_LIGHTING2D;
+	static nucleus::render_mode primitive_test = nucleus::render_mode::NUCLEUS_PRIMITIVES;
 
-	nucleus::setRenderMode(texture_test, gu_list);	
+	nucleus::setRenderMode(lighting_test, gu_list);	
 
 	u64 lastTime;
 	sceRtcGetCurrentTick(&lastTime);
@@ -93,15 +95,15 @@ int main()
 		camera.setCamera();
 
 		// render textured quads
-		demo_textures.textures.at("spelunky_font.png").bind_texture();
-		font_quad.render();
+		// demo_textures.textures.at("spelunky_font.png").bind_texture();
+		// font_quad.render();
 
-		demo_textures.textures.at("circle.png").bind_texture();
-		circle_quad.render();
+		// demo_textures.textures.at("circle.png").bind_texture();
+		// circle_quad.render();
 
 		// render lit quad
-		// demo_textures.textures.at("circle.png").bind_texture();
-		// lit_circle_quad.render();
+		demo_textures.textures.at("circle.png").bind_texture();
+		lit_circle_quad.render();
 		
 		nucleus::endFrame();
 	}

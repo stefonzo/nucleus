@@ -76,17 +76,16 @@ namespace nucleus
 		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
-	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 pos)
+	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 pos, unsigned int color)
 	{
 		width = twidth, height = theight;
 		quad_pos = pos;
 		quad_pos.z = 0.0f;
 
-		//              position              normal            u     v 
-		nt_vertex v0 = {0.0f, -height, 0.0f,  0.0f, 0.0f, 1.0f, 0.0f, 0.0f};
-		nt_vertex v1 = {width, -height, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f};
-		nt_vertex v2 = {width, 0.0f, 0.0f,    0.0f, 0.0f, 1.0f, 1.0f, 1.0f};
-		nt_vertex v3 = {0.0f, 0.0f, 0.0f,     0.0f, 0.0f, 1.0f, 0.0f, 1.0f};
+		tcnp_vertex v0 = {0.0f, 0.0f, color, 0.0f, 0.0f, 1.0f, 0.0f, -height, 0.0f};
+		tcnp_vertex v1 = {1.0f, 0.0f, color, 0.0f, 0.0f, 1.0f, width, -height, 0.0f};
+		tcnp_vertex v2 = {1.0f, 1.0f, color, 0.0f, 0.0f, 1.0f, width, 0.0f, 0.0f};
+		tcnp_vertex v3 = {0.0f, 1.0f, color, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f};
 
 		vertices[0] = v0, vertices[1] = v1, vertices[2] = v2, vertices[3] = v3;
 		vertex_indices[0] = 0, vertex_indices[1] = 1, vertex_indices[2] = 2, vertex_indices[3] = 0, vertex_indices[4] = 2, vertex_indices[5] = 3;
@@ -102,7 +101,7 @@ namespace nucleus
 		sceGumLoadIdentity();
 		sceGumTranslate(&quad_pos);
 		// render quad
-		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_NORMAL_32BITF |GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
+		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_NORMAL_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
 	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
@@ -315,16 +314,16 @@ namespace nucleus
 		char buff[256];
 		//void *draw_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
 		void *draw_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
-		sprintf(buff, "Draw buffer allocated at: %p", draw_buffer);
-		writeToLog(buff);
+		// sprintf(buff, "Draw buffer allocated at: %p", draw_buffer);
+		// writeToLog(buff);
 		//void *disp_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
 		void *disp_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_8888);
-		sprintf(buff, "Display buffer allocated at: %p", disp_buffer);
-		writeToLog(buff);
+		// sprintf(buff, "Display buffer allocated at: %p", disp_buffer);
+		// writeToLog(buff);
 		//void *z_buffer = guGetStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_4444);
 		void *z_buffer = getStaticVramBuffer(PSP_BUF_WIDTH, PSP_SCR_HEIGHT, GU_PSM_4444);
-		sprintf(buff, "Z buffer allocated at: %p", z_buffer);
-		writeToLog(buff);
+		// sprintf(buff, "Z buffer allocated at: %p", z_buffer);
+		// writeToLog(buff);
 		// configure Gu
 		sceGuInit();
 		sceGuStart(GU_DIRECT, list);
@@ -366,6 +365,30 @@ namespace nucleus
 		// model matrix (model coords -> world coords)
 		sceGumMatrixMode(GU_MODEL);
 		sceGumLoadIdentity();
+	}
+
+	void initLighting(void *list)
+	{
+		sceGuStart(GU_DIRECT, list);
+		sceGuEnable(GU_LIGHTING);
+
+    	// Setup light 0 as a directional light
+    	sceGuEnable(GU_LIGHT0);
+    	ScePspFVector3 light_direction = {0.0f, 0.0f, 1.0f}; // Light coming from the viewer towards the screen
+    	sceGuLight(0, GU_DIRECTIONAL, GU_DIFFUSE_AND_SPECULAR, &light_direction);
+
+    	// Set light colors (RGBA)
+    	sceGuLightColor(0, GU_DIFFUSE, GU_COLOR(0.2f, 0.2f, 0.2f, 1.0f)); // White diffuse light
+    	sceGuLightColor(0, GU_SPECULAR, GU_COLOR(0.1f, 0.1f, 0.1f, 1.0f)); // Less intense specular light
+
+    	// Set ambient light globally (RGBA)
+    	sceGuAmbient(GU_COLOR(0.4f, 0.4f, 0.4f, 1.0f)); // Dim ambient light
+
+		sceGuMaterial(GU_AMBIENT_AND_DIFFUSE, GU_COLOR(1.0f, 1.5f, 1.5f, 1.0f)); // Pinkish material
+
+		sceGuFinish();
+		sceGuSync(0, 0);
+		sceDisplayWaitVblankStart();
 	}
 
 	void startFrame(void *list)
