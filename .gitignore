@@ -6,3 +6,4 @@ squares.o
 EBOOT.PBP
 PARAM.SFO
 callbacks.o
+nucleus.o
