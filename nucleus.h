@@ -24,6 +24,13 @@
 #define N_QUAD_VERTICES (4)
 #define N_QUAD_INDICES (6) // 3 triangles for a quad
 
+// rendering function argument macros
+#define PSP_PRIMITIVE_VERTICES (GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D)
+#define PSP_TEXTURE_VERTICES (GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D)
+#define PSP_TEXTURE_NORMAL_VERTICES (GU_INDEX_16BIT | GU_COLOR_8888 | GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_NORMAL_32BITF | GU_TRANSFORM_3D)
+
+#define CAMERA_CLAMPING 10.0f
+
 #define GU_LIST_SIZE 262144
 
 namespace nucleus 
@@ -59,9 +66,9 @@ namespace nucleus
 	public:
 		mesh(unsigned int n_vertices, unsigned int index_count);
 		~mesh();
-		void insert_vertex(vertex v, unsigned int vn);
-		void insert_index(unsigned short val, unsigned int vertex_index);
-		void render_mesh(void);
+		void insertVertex(vertex v, unsigned int vn);
+		void insertIndex(unsigned short val, unsigned int vertex_index);
+		void renderMesh(void);
 	private:
 		vertex *vertices;
 		unsigned short *vertex_indices; // 16 bit
@@ -74,7 +81,7 @@ namespace nucleus
 	public:
 		virtual void render(void) = 0;
 		virtual ~quad() = default;
-		void change_position(ScePspFVector3 *position);
+		void changePosition(ScePspFVector3 *position);
 		T __attribute__((aligned(16)))vertices[N_QUAD_VERTICES];
 	protected:
 		unsigned short __attribute__((aligned(16)))vertex_indices[N_QUAD_INDICES];
@@ -101,16 +108,16 @@ namespace nucleus
 	class texture
 	{
 	public:
-		void load_texture(const char *filename, const int vram); // use GU_TRUE for vram parameter
+		void loadTexture(const char *filename, const int vram); // use GU_TRUE for vram parameter
 		texture(const char *filename, const int vram);
 		~texture();
-		void bind_texture(void);
-		int get_width(void) {return width;}
-		int get_height(void) {return height;}
-		int get_pixel_width(void) {return pixel_width;}
-		int get_pixel_height(void) {return pixel_height;}
-		void *get_texture_data(void) {return texture_data;}
-		void set_texture_data(void* data) {texture_data = data;} // I might not need this...
+		void bindTexture(void);
+		int getWidth(void) {return width;}
+		int getHeight(void) {return height;}
+		int getPixelWidth(void) {return pixel_width;}
+		int getPixelHeight(void) {return pixel_height;}
+		void *getTextureData(void) {return texture_data;}
+		void setTextureData(void* data) {texture_data = data;} // I might not need this...
 	private:
 		void *texture_data;
 		int width, height, pixel_width, pixel_height, nr_channels;
@@ -142,12 +149,14 @@ namespace nucleus
 		ScePspFVector3 camera_target;
 	};
 
+	// nucleus (game engine) methods
 	void writeToLog(const char *message);
 	void *getStaticVramBuffer(unsigned int width, unsigned int height, unsigned int psm);
 	void *getStaticVramTexture(unsigned int width, unsigned int height, unsigned int psm);
 	void initGraphics(void *list);
 	void initMatrices(void);
 	void initLighting(void *list);
+	void readController(SceCtrlData ctrl_data, camera2D *game_camera);
 	void startFrame(void *list);
 	void endFrame(void);
 	void termGraphics(void);
@@ -160,11 +169,11 @@ namespace nucleus
 		{
 			public:
 				rectangle(float width, float height, unsigned int color, ScePspFVector3 position);
-				void changePosition(ScePspFVector3 position);
-				void setWidth(float width);
-				void setHeight(float height);
-				float getWidth(void);
-				float getHeight(void);
+				void changePosition(ScePspFVector3 *position);
+				void setWidth(float width) {w = width;}
+				void setHeight(float height) {h = height;}
+				float getWidth(void) {return w;}
+				float getHeight(void) {return h;}
 				void render(void);
 			private:
 				mesh rectangle_mesh = mesh(4, 6);

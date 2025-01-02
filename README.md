@@ -10,8 +10,6 @@ You'll need the PSPSDK to build this code with the provided makefile, link to PS
 https://github.com/pspdev/pspdev
 
 Todo:
-    -clean up camera code
-    -find clean up variable and function names
     -implement spritesheets
     -implement animation
     -figure out how to keep track of memory so that I can insert and delete textures in vram???

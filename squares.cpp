@@ -19,7 +19,7 @@ int main()
     bool running = true; // used in app loop
     static unsigned int __attribute__((aligned(16))) gu_list[GU_LIST_SIZE]; // used to send commands to the Gu
 
-	setupCallbacks();
+	nucleus::setupCallbacks();
 	nucleus::initGraphics(gu_list);
 	nucleus::initLighting(gu_list);
 	nucleus::initMatrices();
@@ -39,7 +39,7 @@ int main()
 	ScePspFVector3 circle_pos = {20.0f, 20.0f, 0.0f};
 	ScePspFVector3 lit_circle_pos = {PSP_SCR_WIDTH / 2, PSP_SCR_HEIGHT / 2, 0.0f};
 
-	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").get_pixel_width(), demo_textures.textures.at("spelunky_font.png").get_pixel_height(), &font_pos, 0xFFFFFFFF);
+	nucleus::texture_quad font_quad = nucleus::texture_quad(demo_textures.textures.at("spelunky_font.png").getPixelWidth(), demo_textures.textures.at("spelunky_font.png").getPixelHeight(), &font_pos, 0xFFFFFFFF);
 	nucleus::texture_quad circle_quad = nucleus::texture_quad(50.0f, 50.0f, &circle_pos, 0xFFFFFFFF);
 
 	nucleus::lit_texture_quad lit_circle_quad = nucleus::lit_texture_quad(75.0f, 75.0f, &lit_circle_pos, 0xFFFFFFFF);
@@ -69,40 +69,21 @@ int main()
 		sceGuClearColor(0xFF888888);
 		sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT | GU_STENCIL_BUFFER_BIT);
 
-		// testing out controller input
-		// TODO put input code into a function
-		sceCtrlReadBufferPositive(&ctrlData, 1);
-
-		if (ctrlData.Buttons & PSP_CTRL_UP) 
-		{
-			camera.updateCameraTarget(camera.getCameraPosition().x, camera.getCameraPosition().y - 10.0f);
-		}
-		if (ctrlData.Buttons & PSP_CTRL_DOWN) 
-		{
-			camera.updateCameraTarget(camera.getCameraPosition().x, camera.getCameraPosition().y + 10.0f);
-		}
-		if (ctrlData.Buttons & PSP_CTRL_LEFT) 
-		{
-			camera.updateCameraTarget(camera.getCameraPosition().x - 10.0f, camera.getCameraPosition().y);
-		}
-		if (ctrlData.Buttons & PSP_CTRL_RIGHT) 
-		{
-			camera.updateCameraTarget(camera.getCameraPosition().x + 10.0f, camera.getCameraPosition().y);
-		}
+		nucleus::readController(ctrlData, &camera);
 
 		// update and set camera
 		camera.smoothCameraUpdate(dt);
 		camera.setCamera();
 
 		// render textured quads
-		// demo_textures.textures.at("spelunky_font.png").bind_texture();
+		// demo_textures.textures.at("spelunky_font.png").bindTexture();
 		// font_quad.render();
 
-		// demo_textures.textures.at("circle.png").bind_texture();
+		// demo_textures.textures.at("circle.png").bindTexture();
 		// circle_quad.render();
 
 		// render lit quad
-		demo_textures.textures.at("circle.png").bind_texture();
+		demo_textures.textures.at("circle.png").bindTexture();
 		lit_circle_quad.render();
 		
 		nucleus::endFrame();

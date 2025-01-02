@@ -22,7 +22,7 @@ namespace nucleus
 		free(vertex_indices);
 	}
 
-	void mesh::insert_vertex(vertex v, unsigned int vn) 
+	void mesh::insertVertex(vertex v, unsigned int vn) 
 	{
 		if (vn >= n_mesh_vertices) { // check to make sure you don't insert a vertex that is out of array bounds!
 			return;
@@ -31,7 +31,7 @@ namespace nucleus
 		}
 	}
 
-	void mesh::insert_index(unsigned short val, unsigned int vertex_index) 
+	void mesh::insertIndex(unsigned short val, unsigned int vertex_index) 
 	{
 		if (vertex_index >= n_indices) {
 			return;
@@ -40,13 +40,13 @@ namespace nucleus
 		}
 	}
 
-	void mesh::render_mesh(void)
+	void mesh::renderMesh(void)
 	{
-		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, n_indices, vertex_indices, vertices);
+		sceGumDrawArray(GU_TRIANGLES, PSP_PRIMITIVE_VERTICES, n_indices, vertex_indices, vertices);
 	}
 	
 	template <typename T>
-	void quad<T>::change_position(ScePspFVector3 * pos)
+	void quad<T>::changePosition(ScePspFVector3 * pos)
 	{
 		quad_pos.x = pos->x, quad_pos.y = pos->y, quad_pos.z = pos->z;
 	}
@@ -79,7 +79,7 @@ namespace nucleus
 		sceGumLoadIdentity();
 		sceGumTranslate(&quad_pos);
 		// render quad
-		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
+		sceGumDrawArray(GU_TRIANGLES, PSP_TEXTURE_VERTICES, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
 	lit_texture_quad::lit_texture_quad(float twidth, float theight, ScePspFVector3 *pos, unsigned int color)
@@ -107,10 +107,10 @@ namespace nucleus
 		sceGumLoadIdentity();
 		sceGumTranslate(&quad_pos);
 		// render quad
-		sceGumDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_TEXTURE_32BITF | GU_VERTEX_32BITF | GU_NORMAL_32BITF | GU_TRANSFORM_3D, N_QUAD_INDICES, vertex_indices, vertices);
+		sceGumDrawArray(GU_TRIANGLES, PSP_TEXTURE_NORMAL_VERTICES, N_QUAD_INDICES, vertex_indices, vertices);
 	}
 
-	void texture::load_texture(const char *filename, const int vram) // use GU_TRUE for vram parameter
+	void texture::loadTexture(const char *filename, const int vram) // use GU_TRUE for vram parameter
 	{
 		stbi_set_flip_vertically_on_load(GU_FALSE);
 		unsigned char *data = stbi_load(filename, &width, &height, &nr_channels, STBI_rgb_alpha);
@@ -152,7 +152,7 @@ namespace nucleus
 
 	texture::texture(const char *filename, const int vram)
 	{
-		load_texture(filename, vram);
+		loadTexture(filename, vram);
 	}
 
 	texture::~texture()
@@ -160,7 +160,7 @@ namespace nucleus
 
 	}
 
-	void texture::bind_texture(void)
+	void texture::bindTexture(void)
 	{
 		if (texture_data == nullptr) {
 			//writeToLog("Unable to bind texture!");
@@ -231,7 +231,7 @@ namespace nucleus
 	void texture_manager::addTexture(std::string filename)
 	{
 		texture temp_texture = texture(filename.c_str(), GU_TRUE);
-		if (temp_texture.get_texture_data() == nullptr) { return; }
+		if (temp_texture.getTextureData() == nullptr) { return; }
 		textures.insert({filename, temp_texture});
 	}
 
@@ -397,6 +397,28 @@ namespace nucleus
 		sceDisplayWaitVblankStart();
 	}
 
+	void readController(SceCtrlData ctrl_data, camera2D *game_camera)
+	{
+		sceCtrlReadBufferPositive(&ctrl_data, 1);
+
+		if (ctrl_data.Buttons & PSP_CTRL_UP) 
+		{
+			game_camera->updateCameraTarget(game_camera->getCameraPosition().x, game_camera->getCameraPosition().y - CAMERA_CLAMPING);
+		}
+		if (ctrl_data.Buttons & PSP_CTRL_DOWN) 
+		{
+			game_camera->updateCameraTarget(game_camera->getCameraPosition().x, game_camera->getCameraPosition().y + CAMERA_CLAMPING);
+		}
+		if (ctrl_data.Buttons & PSP_CTRL_LEFT) 
+		{
+			game_camera->updateCameraTarget(game_camera->getCameraPosition().x - CAMERA_CLAMPING, game_camera->getCameraPosition().y);
+		}
+		if (ctrl_data.Buttons & PSP_CTRL_RIGHT) 
+		{
+			game_camera->updateCameraTarget(game_camera->getCameraPosition().x + CAMERA_CLAMPING, game_camera->getCameraPosition().y);
+		}
+	}
+
 	void startFrame(void *list)
 	{
 		sceGuStart(GU_DIRECT, list);
@@ -455,35 +477,23 @@ namespace nucleus
 			vertex v2 = {color, width, -height, 0.0f};
 			vertex v3 = {color, width, 0.0f, 0.0f};
 			vertex v4 = {color, 0.0f, 0.0f, 0.0f};
-			rectangle_mesh.insert_vertex(v1, 0);
-			rectangle_mesh.insert_vertex(v2, 1);
-			rectangle_mesh.insert_vertex(v3, 2);
-			rectangle_mesh.insert_vertex(v4, 3);
+			rectangle_mesh.insertVertex(v1, 0);
+			rectangle_mesh.insertVertex(v2, 1);
+			rectangle_mesh.insertVertex(v3, 2);
+			rectangle_mesh.insertVertex(v4, 3);
 
-			rectangle_mesh.insert_index(0, 0);
-			rectangle_mesh.insert_index(1, 1);
-			rectangle_mesh.insert_index(2, 2);
+			rectangle_mesh.insertIndex(0, 0);
+			rectangle_mesh.insertIndex(1, 1);
+			rectangle_mesh.insertIndex(2, 2);
 
-			rectangle_mesh.insert_index(0, 3);
-			rectangle_mesh.insert_index(2, 4);
-			rectangle_mesh.insert_index(3, 5);
+			rectangle_mesh.insertIndex(0, 3);
+			rectangle_mesh.insertIndex(2, 4);
+			rectangle_mesh.insertIndex(3, 5);
 			sceKernelDcacheWritebackInvalidateAll();
 		}
 
-		void rectangle::changePosition(ScePspFVector3 position)
-		{rectangle_pos = position;}
-
-		void rectangle::setWidth(float width) 
-		{w = width;}
-
-		void rectangle::setHeight(float height) 
-		{h = height;}
-
-		float rectangle::getWidth(void) 
-		{return w;}
-
-		float rectangle::getHeight(void) 
-		{return h;}
+		void rectangle::changePosition(ScePspFVector3 *position)
+		{rectangle_pos.x = position->x, rectangle_pos.y = position->y, rectangle_pos.z = position->z;}
 
 		void rectangle::render(void) 
 		{
@@ -492,7 +502,7 @@ namespace nucleus
 			sceGumLoadIdentity();
 			sceGumTranslate(&rectangle_pos);
 			// render rectangle
-			rectangle_mesh.render_mesh();
+			rectangle_mesh.renderMesh();
 		}
 	}
 }
